@@ -1,8 +1,8 @@
 const app = require('./app');
 
-const {serverPort} = require('./config/server.config')
-const transporter = require('./utils/nodemailer-transporter');
-const connectToDB = require('./utils/connectToDB');
+const {serverPort} = require('../config/server.config')
+const transporter = require('../utils/nodemailer-transporter');
+const connectToDB = require('../utils/connectToDB');
 
 connectToDB();
 transporter.verify((error, success) => {

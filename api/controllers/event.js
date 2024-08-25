@@ -1,8 +1,8 @@
-const Event = require('../models/event');
-const Receipt = require('../models/receipt');
+const Event = require('../../models/event');
+const Receipt = require('../../models/receipt');
 
-const dataExtractor = require('../utils/dataExtractor');
-const dateExtractor = require('../utils/dateExtractor');
+const dataExtractor = require('../../utils/dataExtractor');
+const dateExtractor = require('../../utils/dateExtractor');
 
 const createEvent = async (req, res) => {
     const { year, monthIndex, day } = dateExtractor(req.body.date);

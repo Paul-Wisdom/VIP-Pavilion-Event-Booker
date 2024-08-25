@@ -2,7 +2,7 @@ const express = require('express');
 require('express-async-errors');
 
 const eventRouter = require('./routes/event')
-const errorHandler = require('./middlewares/errorHandler')
+const errorHandler = require('../middlewares/errorHandler')
 
 const app = express();
 
