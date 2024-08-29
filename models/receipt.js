@@ -25,6 +25,10 @@ const receiptSchema = new mongoose.Schema({
     paid: {
         type: Boolean,
         default: false
+    },
+    email: {
+        type: String,
+        required: true
     }
 })
 
