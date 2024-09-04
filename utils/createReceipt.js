@@ -1,14 +1,26 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium = require('chrome-aws-lambda');
+require('dotenv').config();
+const config = require('../config/server.config');
 
 //type is 0 for invoice and 1 for receipts
 async function createReceiptPDF(receiptData, outputPath, type) {
-    const data = {
-        ...receiptData,
-        companyName: 'VIP PAVILLION',
-        companyAddress: '100 Igando Road, Ikotun, Lagos 102213, Lagos',
-        companyPhone: '(+234) 802 343 4848, (+234) 814 788 0481',
-      };
-  const browser = await puppeteer.launch();
+  const data = {
+      ...receiptData,
+      companyName: 'VIP PAVILLION',
+      companyAddress: '100 Igando Road, Ikotun, Lagos 102213, Lagos',
+      companyPhone: '(+234) 802 343 4848, (+234) 814 788 0481',
+    };
+  
+  const executablePath = process.env.ENV === "development"? config.chromeExecutablePath: await chromium.executablePath;
+  const args = process.env.ENV === "development"? [] : chromium.args;
+  const headless = process.env.ENV === "development"? false : chromium.headless
+  console.log(executablePath);
+  const browser = await puppeteer.launch({
+        executablePath: executablePath,
+        args: args,
+        headless: headless,
+      });
   const page = await browser.newPage();
 
   // Generate HTML content dynamically based on receipt data
