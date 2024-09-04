@@ -3,6 +3,8 @@ const Receipt = require('../../models/receipt');
 
 const dataExtractor = require('../../utils/dataExtractor');
 const dateExtractor = require('../../utils/dateExtractor');
+const createReceiptPDF = require('../../utils/createReceipt');
+const {sendInvoice, sendReceipt} = require('../../utils/sendEmails');
 
 const createEvent = async (req, res) => {
     const { year, monthIndex, day } = dateExtractor(req.body.date);
@@ -27,10 +29,10 @@ const deleteEvent = async (req, res) => {
     const eventResponse = await Event.findOneAndDelete({date: date});
     if(eventResponse)
     {
-        const receiptResponse = await Receipt.findOneAndDelete({eventId: event._id});
+        const receiptResponse = await Receipt.findOneAndDelete({eventId: eventResponse._id});
         console.log(receiptResponse);
     }
-    console.log(response);
+    console.log(eventResponse);
     return res.status(204).end();
 }
 //2024-05-11T23:00:00.000+00:00
@@ -61,6 +63,9 @@ const generateInvoice = async (req, res) => {
     console.log(categories);
     const receiptObject = new Receipt({eventId: event._id, paid: false, categories: categories, email: event.email});
     const savedReceipt = await receiptObject.save();
+    const receiptData = {customerEmail: savedReceipt.email, items: savedReceipt.categories, receiptGenerationDate: savedReceipt.date, eventDate: event.date, receiptNumber: savedReceipt._id}
+    const filePath = await createReceiptPDF(receiptData, 'invoice.pdf', 0);
+    await sendInvoice(filePath, savedReceipt.email, event.date);
     return res.json(savedReceipt);
 
 }
@@ -88,6 +93,9 @@ const regenerateInvoice = async (req, res) => {
     console.log(categories);
     const receiptObject = new Receipt({eventId: event._id, paid: false, categories: categories, email: event.email});
     const savedReceipt = await receiptObject.save();
+    const receiptData = {customerEmail: savedReceipt.email, items: savedReceipt.categories, receiptGenerationDate: savedReceipt.date, eventDate: event.date, receiptNumber: savedReceipt._id}
+    const filePath = await createReceiptPDF(receiptData, 'invoice.pdf', 0);
+    await sendInvoice(filePath, savedReceipt.email, event.date);
     return res.json(savedReceipt);
 }
 
@@ -105,14 +113,52 @@ const generateReceipt = async (req, res) => {
     {
         return res.status(404).send({message: "No Invoice generated"});
     }
+    const receiptData = {customerEmail: receipt.email, items: receipt.categories, receiptGenerationDate: receipt.date, eventDate: event.date, receiptNumber: receipt._id}
+    const filePath = await createReceiptPDF(receiptData, 'receipt.pdf', 1);
+    await sendReceipt(filePath, receipt.email, event.date);
     // const receipt = await invoice.updateOne({paid: true}, {new: true, runValidators: true, context: 'query'})
     return res.json(receipt);
 }
 
+const checkForInvoiceGeneration = async (req, res, next) => {
+    const { year, monthIndex, day } = dateExtractor(req.params.date);
+    const date = new Date (year, monthIndex, day);
+
+    const event = await Event.findOne({date: date});
+    if(!event)
+    {
+        return res.status(404).send({message: "No Event on this date"});
+    }
+    const invoice = await Receipt.findOne({eventId: event._id});
+    if(!invoice)
+    {
+        return res.status(404).send({message: "No Invoice generated"});
+    }
+    return res.status(200).json({message: "Invoice generated for this date"});
+}
+
+const checkForReceiptGeneration = async (req, res, next) => {
+    const { year, monthIndex, day } = dateExtractor(req.params.date);
+    const date = new Date (year, monthIndex, day);
+
+    const event = await Event.findOne({date: date});
+    if(!event)
+    {
+        return res.status(404).send({message: "No Event on this date"});
+    }
+    const receipt = await Receipt.findOne({eventId: event._id, paid: true});
+    if(!receipt)
+    {
+        return res.status(404).send({message: "No Receipt generated"});
+    }
+    return res.status(200).json({message: "Receipt generated for this date"});
+}
 module.exports = {
     generateInvoice,
     regenerateInvoice,
     createEvent,
     deleteEvent,
-    generateReceipt
+    generateReceipt,
+    checkForInvoiceGeneration,
+    checkForReceiptGeneration
 }
