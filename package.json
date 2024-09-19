@@ -6,25 +6,28 @@
   "scripts": {
     "test": "jest",
     "dev": "nodemon api/index.js",
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "postinstall": "npx puppeteer install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "chrome-aws-lambda": "^10.1.0",
-    "cors": "^2.8.5",
+    "@sparticuz/chromium": "^127.0.0",
+    "@sparticuz/chromium-min": "^127.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-async-errors": "^3.1.1",
+    "luxon": "^3.5.0",
     "mongoose": "^8.5.2",
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.14",
-    "puppeteer-core": "^23.3.0"
+    "pdfkit": "^0.15.0",
+    "puppeteer": "^23.3.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
+    "prettier": "^3.3.3",
     "supertest": "^7.0.0"
   }
 }

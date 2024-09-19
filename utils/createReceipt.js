@@ -1,156 +1,91 @@
-const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
-require('dotenv').config();
-const config = require('../config/server.config');
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 
-//type is 0 for invoice and 1 for receipts
-async function createReceiptPDF(receiptData, outputPath, type) {
+// type is 0 for invoice and 1 for receipts
+async function createReceiptPDF(receiptData) {
   const data = {
-      ...receiptData,
-      companyName: 'VIP PAVILLION',
-      companyAddress: '100 Igando Road, Ikotun, Lagos 102213, Lagos',
-      companyPhone: '(+234) 802 343 4848, (+234) 814 788 0481',
-    };
-  
-  const executablePath = process.env.ENV === "development"? config.chromeExecutablePath: await chromium.executablePath;
-  const args = process.env.ENV === "development"? [] : chromium.args;
-  const headless = process.env.ENV === "development"? false : chromium.headless
-  console.log(executablePath);
-  const browser = await puppeteer.launch({
-        executablePath: executablePath,
-        args: args,
-        headless: headless,
+    ...receiptData,
+    companyName: "VIP PAVILLION",
+    companyAddress: "100 Igando Road, Ikotun, Lagos 102213, Lagos",
+    companyPhone: "(+234) 802 343 4848, (+234) 814 788 0481",
+  };
+  console.log(data);
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 60 });
+    let buffers = [];
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      resolve(pdfBuffer);
+    });
+    doc.on("error", reject);
+
+    doc
+      .rect(0, 0, doc.page.width, doc.page.height)
+      .fillColor("whitesmoke")
+      .fill();
+    doc
+      .rect(45, 45, doc.page.width - 90, doc.page.height - 90)
+      .lineWidth(2)
+      .strokeColor("#000000")
+      .stroke();
+
+    doc.fillColor("darkblue");
+
+    doc.fontSize(20).text(`${data.companyName}`, { align: "center" });
+    doc.fontSize(12).text(`${data.companyAddress}`, { align: "center" });
+    doc.moveDown();
+    doc.fontSize(12).text(`${data.companyPhone}`, { align: "center" });
+    doc.moveDown(0).lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+    if (data.type === 0) {
+      doc.fontSize(18).text("Invoice", { align: "center" });
+      doc.moveDown();
+    } else {
+      doc.fontSize(18).text("Receipt", { align: "center" });
+      doc.moveDown();
+    }
+
+    doc
+      .fontSize(15)
+      .text("   ", { continued: true })
+      .text("Client Details", { align: "left", underline: true });
+    doc.fontSize(15).text(`Email:  ${data.customerEmail}`, { align: "left" });
+    doc.fontSize(15).text(`Event Date: ${data.eventDate}`, { align: "left" });
+    doc.moveDown();
+
+    doc
+      .fontSize(15)
+      .text("   ", { continued: true })
+      .text("Details", { align: "left", underline: true });
+    doc.fontSize(15).text(`ID:  ${data.receiptNumber}`, { align: "left" });
+    doc
+      .fontSize(15)
+      .text(`Generation Date/Time: ${data.receiptGenerationDate}`, {
+        align: "left",
       });
-  const page = await browser.newPage();
+    doc.moveDown();
 
-  // Generate HTML content dynamically based on receipt data
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          background-color: white;
-          color: black;
-          padding: 20px;
-        }
-        .receipt-container {
-          border: 2px solid gold;
-          padding: 20px;
-          border-radius: 10px;
-        }
-        .receipt-title {
-          text-align: center;
-          font-size: 24px;
-          color: gold;
-          margin-bottom: 20px;
-        }
-        .section {
-          margin-bottom: 20px;
-        }
-        .section-title {
-          font-weight: bold;
-          color: gold;
-          margin-bottom: 10px;
-        }
-        .section-content {
-          margin-left: 10px;
-        }
-        .items-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 20px;
-        }
-        .items-table th, .items-table td {
-          border: 1px solid gold;
-          padding: 10px;
-          text-align: left;
-        }
-        .items-table th {
-          background-color: gold;
-          color: white;
-        }
-        .items-table td {
-          background-color: #fff8dc; /* Light gold color */
-        }
-        .total {
-          text-align: right;
-          font-size: 18px;
-          color: black;
-          margin-bottom: 20px;
-        }
-        .thank-you {
-          text-align: center;
-          font-size: 16px;
-          color: gold;
-          margin-top: 40px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="receipt-container">
-        <div class="receipt-title">${type > 0 ? 'Receipt' : 'Invoice'}</div>
-        
-        <div class="section">
-          <div class="section-title">Company Information</div>
-          <div class="section-content">
-            <strong>Company Name:</strong> ${data.companyName}<br>
-            <strong>Address:</strong> ${data.companyAddress}<br>
-            <strong>Phone:</strong> ${data.companyPhone}
-          </div>
-        </div>
-        
-        <div class="section">
-          <div class="section-title">Customer Information</div>
-          <div class="section-content">
-            <strong>Customer Email:</strong> ${data.customerEmail}<br>
-            <strong>Event Date:</strong> ${data.eventDate}
-          </div>
-        </div>
-        
-        <div class="section">
-          <div class="section-title">Receipt Details</div>
-          <div class="section-content">
-            <strong>Receipt ID:</strong> ${data.receiptNumber}<br>
-            <strong>Date:</strong> ${data.receiptGenerationDate}
-          </div>
-        </div>
-        
-        <div class="section">
-          <div class="section-title">Items</div>
-          <table class="items-table">
-            <tr>
-              <th>Service</th>
-              <th>Price (N)</th>
-            </tr>
-            ${data.items.map(item => `
-            <tr>
-              <td>${item.category}</td>
-              <td>${Number(item.amount).toFixed(2)}</td>
-            </tr>
-            `).join('')}
-          </table>
-        </div>
-        
-        <div class="total">
-          <strong>Total Amount: N${data.items.reduce((acc, item) => acc + Number(item.amount), 0).toFixed(2)}</strong><br>
-          <strong>Status: ${type > 0 ? 'PAID' : 'Pending Payment'}</strong>
-        </div>
-        
-        <div class="thank-you">
-          Thank you for your patronage!
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+    doc
+      .fontSize(15)
+      .text("Amount in words:   ", { align: "left", continued: true })
+      .fontSize(15)
+      .text(`${data.amountStr} Naira Only`, { underline: true });
+    doc.moveDown();
 
-  await page.setContent(htmlContent);
-  await page.pdf({ path: outputPath, format: 'A4' });
-
-  await browser.close();
-  return outputPath;
+    doc
+      .fontSize(15)
+      .text(`Amount in figures: N${data.amountNum}`, { align: "left" });
+    doc.moveDown();
+    doc
+      .fontSize(15)
+      .text(`Payment Status: ${data.type === 0 ? "Pending" : "Paid"}`, {
+        align: "left",
+      });
+    doc.moveDown();
+    doc.end();
+  });
 }
 
-module.exports = createReceiptPDF
+module.exports = createReceiptPDF;
