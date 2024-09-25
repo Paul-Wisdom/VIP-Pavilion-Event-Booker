@@ -13,21 +13,32 @@ const { sendInvoice, sendReceipt } = require("../../utils/sendEmails");
 // const createRedisConnection = require('../../utils/createRedisConnection');
 
 const createEvent = async (req, res) => {
+  if (!req.body.date) {
+    return res.status(400).send({ message: "Date not provided" });
+  }
+
   const { year, monthIndex, day } = dateExtractor(req.body.date);
   const date = new Date(year, monthIndex, day, 10, 0, 0, 0);
   const email = req.body.email;
 
+  if (!email) {
+    return res.status(400).send({ message: "Email not provided" });
+  }
   const event = await Event.findOne({ date: date });
   if (event) {
     return res.status(403).send({ message: "Event booked for date already" });
   }
   const eventObject = new Event({ date: date, email: email });
+  console.log(eventObject);
   const savedEvent = await eventObject.save();
   console.log(savedEvent);
   res.json(savedEvent);
 };
 
 const deleteEvent = async (req, res) => {
+  if (!req.body.date) {
+    return res.status(400).send({ message: "Date not provided" });
+  }
   const { year, monthIndex, day } = dateExtractor(req.body.date);
   const date = new Date(year, monthIndex, day, 10, 0, 0, 0);
 
@@ -36,19 +47,27 @@ const deleteEvent = async (req, res) => {
     const receiptResponse = await Receipt.findOneAndDelete({
       eventId: eventResponse._id,
     });
-    console.log(receiptResponse);
+    // console.log(receiptResponse);
   }
-  console.log(eventResponse);
+  // console.log(eventResponse);
   return res.status(204).end();
 };
 //2024-05-11T23:00:00.000+00:00
 const generateInvoice = async (req, res) => {
+  if (!req.body.date) {
+    return res.status(400).send({ message: "Date not provided" });
+  }
   const { year, monthIndex, day } = dateExtractor(req.body.date);
   const date = new Date(year, monthIndex, day, 10, 0, 0, 0);
   const amountStr = req.body.amountStr;
   const amountNum = req.body.amountNum;
-  const data = req.body.data;
 
+  if (!amountStr) {
+    return res.status(400).send({ message: "Amount in words not provided" });
+  }
+  if (!amountNum) {
+    return res.status(400).send({ message: "Amount in figures not provided" });
+  }
   const event = await Event.findOne({ date: date });
   if (!event) {
     return res.status(404).send({ message: "No Event on this date" });
@@ -84,12 +103,20 @@ const generateInvoice = async (req, res) => {
 };
 
 const regenerateInvoice = async (req, res) => {
+  if (!req.body.date) {
+    return res.status(400).send({ message: "Date not provided" });
+  }
   const { year, monthIndex, day } = dateExtractor(req.body.date);
   const date = new Date(year, monthIndex, day, 10, 0, 0, 0);
   const amountStr = req.body.amountStr;
   const amountNum = req.body.amountNum;
   const data = req.body.data;
-
+  if (!amountStr) {
+    return res.status(400).send({ message: "Amount in words not provided" });
+  }
+  if (!amountNum) {
+    return res.status(400).send({ message: "Amount in figures not provided" });
+  }
   const event = await Event.findOne({ date: date });
   if (!event) {
     return res.status(404).send({ message: "No Event on this date" });
@@ -105,6 +132,7 @@ const regenerateInvoice = async (req, res) => {
     email: event.email,
   });
   const savedReceipt = await receiptObject.save();
+  console.log("saved receipt",  savedReceipt);
   const receiptData = {
     type: 0,
     outputPath: "invoice.pdf",
@@ -122,6 +150,9 @@ const regenerateInvoice = async (req, res) => {
 };
 
 const generateReceipt = async (req, res) => {
+  if (!req.body.date) {
+    return res.status(400).send({ message: "Date not provided" });
+  }
   const { year, monthIndex, day } = dateExtractor(req.body.date);
   const date = new Date(year, monthIndex, day, 10, 0, 0, 0);
 
