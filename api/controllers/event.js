@@ -215,7 +215,7 @@ const checkForReceiptGeneration = async (req, res, next) => {
 };
 
 const verifyReceipt = async(req, res) => {
-  const id = req.body.id
+  const id = req.params.id
   if(!id)
   {
     return res.status(400).send({message: "Id not provided"})

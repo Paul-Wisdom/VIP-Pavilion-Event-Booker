@@ -8,6 +8,6 @@ eventRouter.post("/regenerate-invoice", eventController.regenerateInvoice);
 eventRouter.post("/generate-receipt", eventController.generateReceipt);
 eventRouter.get("/invoice/:date", eventController.checkForInvoiceGeneration);
 eventRouter.get("/receipt/:date", eventController.checkForReceiptGeneration);
-eventRouter.get("/verify-receipt", eventController.verifyReceipt)
+eventRouter.get("/verify-receipt/:id", eventController.verifyReceipt)
 
 module.exports = eventRouter;
