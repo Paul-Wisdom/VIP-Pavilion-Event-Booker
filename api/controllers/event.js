@@ -213,6 +213,21 @@ const checkForReceiptGeneration = async (req, res, next) => {
   }
   return res.status(200).json({ message: "Receipt generated for this date" });
 };
+
+const verifyReceipt = async(req, res) => {
+  const id = req.body.id
+  if(!id)
+  {
+    return res.status(400).send({message: "Id not provided"})
+  }
+
+  const receipt = await Receipt.findById(id);
+  if(!receipt)
+  {
+    return res.status(404).send({message: "No receipt found"})
+  }
+  return res.json(receipt);
+}
 module.exports = {
   generateInvoice,
   regenerateInvoice,
@@ -221,4 +236,5 @@ module.exports = {
   generateReceipt,
   checkForInvoiceGeneration,
   checkForReceiptGeneration,
+  verifyReceipt
 };

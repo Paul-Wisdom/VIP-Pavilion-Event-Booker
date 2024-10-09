@@ -22,69 +22,82 @@ async function createReceiptPDF(receiptData) {
     doc.on("error", reject);
 
     doc
-      .rect(0, 0, doc.page.width, doc.page.height)
-      .fillColor("whitesmoke")
-      .fill();
-    doc
-      .rect(45, 45, doc.page.width - 90, doc.page.height - 90)
-      .lineWidth(2)
-      .strokeColor("#000000")
-      .stroke();
-
-    doc.fillColor("darkblue");
-
-    doc.fontSize(20).text(`${data.companyName}`, { align: "center" });
-    doc.fontSize(12).text(`${data.companyAddress}`, { align: "center" });
-    doc.moveDown();
-    doc.fontSize(12).text(`${data.companyPhone}`, { align: "center" });
-    doc.moveDown(0).lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
-    if (data.type === 0) {
-      doc.fontSize(18).text("Invoice", { align: "center" });
+        .rect(0, 0, doc.page.width, doc.page.height)
+        .fillColor("#F5F5F5")
+        .fill();
+      doc
+        .rect(45, 45, doc.page.width - 90, doc.page.height - 90)
+        .lineWidth(3)
+        .strokeColor("navy")
+        .stroke();
+  
+      
+        doc.fillColor("navy");
+      doc.fontSize(20).text(`${data.companyName}`, { align: "center" });
+    //   doc.fillColor("#000000");
+      doc.fontSize(12).text(`${data.companyAddress}`, { align: "center" });
       doc.moveDown();
-    } else {
-      doc.fontSize(18).text("Receipt", { align: "center" });
+      doc.fontSize(12).text(`${data.companyPhone}`, { align: "center" });
+      doc.moveDown(0).lineWidth(2).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
       doc.moveDown();
-    }
-
+      doc.fillColor("navy");
+      if (data.type === 0) {
+        doc.fontSize(15).text("Invoice", { align: "left" });
+      } else {
+        doc.fontSize(15).text("Receipt", { align: "left" });
+      }
+      doc.fillColor("#000000");
+    doc.fontSize(13).text(`ID:  ${data.receiptNumber}`, { align: "left" });
     doc
-      .fontSize(15)
-      .text("   ", { continued: true })
-      .text("Client Details", { align: "left", underline: true });
-    doc.fontSize(15).text(`Email:  ${data.customerEmail}`, { align: "left" });
-    doc.fontSize(15).text(`Event Date: ${data.eventDate}`, { align: "left" });
-    doc.moveDown();
-
-    doc
-      .fontSize(15)
-      .text("   ", { continued: true })
-      .text("Details", { align: "left", underline: true });
-    doc.fontSize(15).text(`ID:  ${data.receiptNumber}`, { align: "left" });
-    doc
-      .fontSize(15)
-      .text(`Generation Date/Time: ${data.receiptGenerationDate}`, {
+      .fontSize(13)
+      .text(`Generated at : ${data.receiptGenerationDate}`, {
         align: "left",
       });
-    doc.moveDown();
+    doc.moveDown(3);
+    doc.fillColor("navy");
+      doc
+        .fontSize(15)
+        .text("Client Information", { align: "left"});
+        doc.fillColor("#000000");
+      doc.fontSize(13).text(`Email:  ${data.customerEmail}`, { align: "left" });
+      doc.fontSize(13).text(`Event Date: ${data.eventDate}`, { align: "left" });
+      doc.moveDown(2);
+      doc.fillColor("navy");
+      if(data.type === 0)
+      {
+        doc.fontSize(15).text('Amount Due:')
+        doc.fillColor("#000000");
+      doc
+        .fontSize(15)
+        .text("In words:   ", { align: "left", continued: true })
+        .fontSize(15)
+        .text(`${data.amountStr} Naira Only`, { underline: true });
 
-    doc
-      .fontSize(15)
-      .text("Amount in words:   ", { align: "left", continued: true })
-      .fontSize(15)
-      .text(`${data.amountStr} Naira Only`, { underline: true });
-    doc.moveDown();
-
-    doc
-      .fontSize(15)
-      .text(`Amount in figures: N${data.amountNum}`, { align: "left" });
-    doc.moveDown();
-    doc
-      .fontSize(15)
-      .text(`Payment Status: ${data.type === 0 ? "Pending" : "Paid"}`, {
-        align: "left",
-      });
-    doc.moveDown();
-    doc.end();
+      doc
+        .fontSize(15)
+        .text(`In figures: N${data.amountNum}`, { align: "left" });
+      doc.moveDown();
+      }
+      else{
+        doc.fontSize(15).text('Amount Received:')
+        doc.fillColor("#000000");
+      doc
+        .fontSize(15)
+        .text("In words:   ", { align: "left", continued: true })
+        .fontSize(15)
+        .text(`${data.amountStr} Naira Only`, { underline: true });
+  
+      doc
+        .fontSize(15)
+        .text(`In figures: N${data.amountNum}`, { align: "left" });
+      doc.moveDown();
+      }
+      doc.fillColor("#000000");
+      doc.fontSize(13).text(`Payment ${data.type === 0? 'due': 'made'} for renting our hall at ${data.companyAddress} including Decorations, Security and Post-event clean up services.`)
+      doc.moveDown(2);
+      doc.fillColor("navy");
+      doc.fontSize(15).text(`Thank You For Your ${data.type === 0? 'Patronage': 'Payment'}`, {align: 'center'})
+      doc.end();
   });
 }
 
